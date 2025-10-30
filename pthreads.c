@@ -22,7 +22,7 @@ Matrix algorithms[]={
     {{0,0,0},{0,1,0},{0,0,0}}
 };
 
-int thread_count = 10;
+int thread_count = 4;
 
 typedef struct {
     long rank;
@@ -68,17 +68,17 @@ void* ThreadConvolute(void* args){
     Matrix* algorithm = &data->algorithm;
     
     //Each thread handles a row block
-    int local_row = srcImage->height / thread_count * my_rank;
+    int start_row = srcImage->height / thread_count * my_rank;
     int end_row = srcImage->height / thread_count * (my_rank + 1);
     //Last thread takes the rest
-    if (my_rank == thread_count - 1) {
+    if (my_rank == thread_count) {
         end_row = srcImage->height;
     }
     int pix,bit;
-    for (; local_row < end_row; local_row++){
+    for (int row = start_row; row < end_row; row++){
         for (pix=0;pix<srcImage->width;pix++){
             for (bit=0;bit<srcImage->bpp;bit++){
-                destImage->data[Index(pix,local_row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,local_row,bit,*algorithm);
+                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,*algorithm);
             }
         }
     }
@@ -95,7 +95,6 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
 
     //Create threads to perform convolution
     long thread;
-    int thread_count = 10;
     pthread_t* thread_handles;
     thread_handles = (pthread_t*) malloc (thread_count*sizeof(pthread_t));
 
@@ -110,7 +109,7 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
 
     //Launch threads
     for (thread = 0; thread < thread_count; thread++) {
-        pthread_create(&thread_handles[thread], NULL, &ThreadConvolute, (void*) args);
+        pthread_create(&thread_handles[thread], NULL, &ThreadConvolute, (void*) &args[thread]);
     }
     //Join threads
     for (thread = 0; thread < thread_count; thread++) {
