@@ -22,7 +22,7 @@ Matrix algorithms[]={
     {{0,0,0},{0,1,0},{0,0,0}}
 };
 
-int thread_count = 4;
+int thread_count = 16;
 
 typedef struct {
     long rank;
@@ -71,7 +71,7 @@ void* ThreadConvolute(void* args){
     int start_row = srcImage->height / thread_count * my_rank;
     int end_row = srcImage->height / thread_count * (my_rank + 1);
     //Last thread takes the rest
-    if (my_rank == thread_count) {
+    if (my_rank == thread_count - 1) {
         end_row = srcImage->height;
     }
     int pix,bit;
